@@ -53,47 +53,48 @@ describe('renderCard', () => {
     expect(siteLink?.getAttribute('href')).toBe('https://devtrace.thingz.io/score/alice')
   })
 
-  it('renders the trust-essentials signals grid when signals are present', () => {
+  it('renders the category breakdown as bars when categories are present', () => {
     const res: ScoreResult = {
       ok: true,
       data: {
         username: 'alice',
-        score: { grade: 'A', value: 0.9 },
-        signals: { account_age_days: 730, followers: 42, public_repos: 7, prs_merged: 13, suspended: false },
-        repo_context: { commits_verified: true },
+        score: { grade: 'A', value: 0.9, categories: { behavioral: 0.28, community: 0.25, engagement: 0.05, identity: 0.32 } },
       } as any,
     }
     const root = renderCard(host(), 'alice', res).shadowRoot!
     const text = root.textContent ?? ''
-    expect(text).toContain('Account age')
-    expect(text).toContain('2.0y')
-    expect(text).toContain('Followers')
-    expect(text).toContain('42')
-    expect(text).toContain('PRs merged')
-    expect(text).toContain('Verified commits')
-    expect(text).toContain('Yes')
-    expect(text).not.toContain('suspended')
+    expect(text).toContain('behavioral')
+    expect(text).toContain('0.28')
+    expect(text).toContain('identity')
+    expect(text).toContain('0.32')
+    const fills = root.querySelectorAll('.dt-bar-f')
+    expect(fills.length).toBe(4)
+    // bar width is proportional to the value (0.28 -> 28%)
+    expect((fills[0] as HTMLElement).style.width).toBe('28%')
   })
 
-  it('flags suspended accounts and omits the grid in basic mode', () => {
-    const suspended: ScoreResult = {
+  it('shows "needs repo" for a non-numeric category and flags suspended accounts', () => {
+    const res: ScoreResult = {
       ok: true,
       data: {
         username: 'mal',
-        score: { grade: 'F', value: 0.1 },
-        signals: { account_age_days: 5, followers: 0, public_repos: 0, prs_merged: 0, suspended: true },
+        score: { grade: 'F', value: 0.1, categories: { identity: 0.2, code_provenance: null as any } },
+        signals: { suspended: true },
       } as any,
     }
-    const root = renderCard(host(), 'mal', suspended).shadowRoot!
+    const root = renderCard(host(), 'mal', res).shadowRoot!
+    expect(root.textContent).toContain('code provenance')
+    expect(root.textContent).toContain('needs repo')
     expect(root.textContent).toContain('Account suspended')
-    expect(root.textContent).toContain('5d')
+  })
 
+  it('omits the category breakdown in basic mode', () => {
     const basic: ScoreResult = {
       ok: true,
       data: { username: 'a', score: { grade: 'C-', value: 0.54 }, detail: 'x' } as any,
     }
-    const basicRoot = renderCard(host(), 'a', basic).shadowRoot!
-    expect(basicRoot.querySelector('.dt-grid')).toBeNull()
+    const root = renderCard(host(), 'a', basic).shadowRoot!
+    expect(root.querySelector('.dt-cats')).toBeNull()
   })
 
   it('renders an error message on failure', () => {

@@ -21,12 +21,15 @@ const CSS =
   '.dt-val{color:#999;font-variant-numeric:tabular-nums}' +
   '.dt-link{color:#4a9eff;text-decoration:none;font-weight:500}' +
   '.dt-risk{margin:5px 0 0;color:#999}' +
-  '.dt-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px 18px;margin-top:8px}' +
-  '.dt-stat{display:flex;justify-content:space-between;gap:8px}' +
-  '.dt-stat-l{color:#999}' +
-  '.dt-stat-v{color:#f0f0f0;font-variant-numeric:tabular-nums}' +
-  '.dt-flag{margin-top:6px;color:#ef4444;font-weight:600}' +
-  '.dt-foot{margin-top:8px}' +
+  '.dt-cats{margin-top:10px;display:flex;flex-direction:column;gap:5px}' +
+  '.dt-cat{display:grid;grid-template-columns:96px 1fr 40px;align-items:center;gap:10px}' +
+  '.dt-cat-l{color:#999;text-transform:capitalize}' +
+  '.dt-bar{height:8px;background:#171a22;border-radius:4px;overflow:hidden}' +
+  '.dt-bar-f{height:100%;background:#4a9eff}' +
+  '.dt-cat-v{color:#f0f0f0;text-align:right;font-variant-numeric:tabular-nums}' +
+  '.dt-cat-na{color:#555;font-size:11px;text-align:right}' +
+  '.dt-flag{margin-top:8px;color:#ef4444;font-weight:600}' +
+  '.dt-foot{margin-top:10px}' +
   '.dt-err{color:#ef4444}'
 
 export function gradeColor(grade: string): string {
@@ -43,10 +46,8 @@ function errorMessage(status: number, message: string): string {
   return message || "Couldn't reach DevTrace."
 }
 
-function fmtAge(days: number): string {
-  if (!Number.isFinite(days)) return '—'
-  if (days >= 365) return `${(days / 365).toFixed(1)}y`
-  return `${Math.round(days)}d`
+function catLabel(key: string): string {
+  return key.replace(/_/g, ' ')
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -89,25 +90,31 @@ export function renderCard(host: HTMLElement, username: string, res: ScoreResult
 
   if (d.risk_summary) card.append(el('div', 'dt-risk', d.risk_summary))
 
-  // Authenticated responses carry richer signals; show the trust essentials.
-  const s = d.signals
-  if (s) {
-    const grid = el('div', 'dt-grid')
-    const stat = (label: string, val: string): HTMLElement => {
-      const cell = el('div', 'dt-stat')
-      cell.append(el('span', 'dt-stat-l', label), el('span', 'dt-stat-v', val))
-      return cell
+  // Authenticated responses carry the per-category score breakdown; show it as
+  // labeled bars. A non-numeric category (e.g. code provenance without repo
+  // context) renders a "needs repo" hint instead of a bar.
+  const cats = d.score.categories
+  if (cats && Object.keys(cats).length > 0) {
+    const wrap = el('div', 'dt-cats')
+    for (const [key, raw] of Object.entries(cats)) {
+      const row = el('div', 'dt-cat')
+      row.append(el('span', 'dt-cat-l', catLabel(key)))
+      const track = el('div', 'dt-bar')
+      if (typeof raw === 'number' && Number.isFinite(raw)) {
+        const pct = Math.max(0, Math.min(1, raw)) * 100
+        const fill = el('div', 'dt-bar-f')
+        fill.style.width = `${+pct.toFixed(2)}%`
+        track.append(fill)
+        row.append(track, el('span', 'dt-cat-v', raw.toFixed(2)))
+      } else {
+        row.append(track, el('span', 'dt-cat-na', 'needs repo'))
+      }
+      wrap.append(row)
     }
-    grid.append(stat('Account age', fmtAge(s.account_age_days)))
-    grid.append(stat('Followers', String(s.followers)))
-    grid.append(stat('Public repos', String(s.public_repos)))
-    grid.append(stat('PRs merged', String(s.prs_merged)))
-    if (d.repo_context) {
-      grid.append(stat('Verified commits', d.repo_context.commits_verified ? 'Yes' : 'No'))
-    }
-    card.append(grid)
-    if (s.suspended) card.append(el('div', 'dt-flag', '⚠ Account suspended'))
+    card.append(wrap)
   }
+
+  if (d.signals?.suspended) card.append(el('div', 'dt-flag', '⚠ Account suspended'))
 
   // The card only shows a summary; link to the user's full breakdown page.
   const foot = el('div', 'dt-foot')

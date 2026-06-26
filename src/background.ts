@@ -11,13 +11,16 @@ async function getToken(): Promise<string | undefined> {
 }
 
 async function handle(req: ScoreRequest): Promise<ScoreResult> {
-  const key = `${req.username}|${req.repo ?? ''}`
+  const token = await getToken()
+  // Repo-context scoring requires a token; sending repo unauthenticated errors.
+  const repo = token ? req.repo : undefined
+  // Key on the token too, so adding/clearing it busts cached basic/enriched results.
+  const key = `${req.username}|${repo ?? ''}|${token ?? ''}`
   const cached = cache.get(key)
   if (cached) return { ok: true, data: cached }
 
   try {
-    const token = await getToken()
-    const data = await fetchScore(req.username, { apiUrl: API_URL, token, repo: req.repo })
+    const data = await fetchScore(req.username, { apiUrl: API_URL, token, repo })
     cache.set(key, data)
     return { ok: true, data }
   } catch (err) {
