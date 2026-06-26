@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>DevTrace Options</title>
+    <style>
+      body{font:14px/1.6 ui-sans-serif,system-ui,sans-serif;background:#0a0a0c;color:#f0f0f0;max-width:440px;margin:0 auto;padding:32px 24px}
+      h2{margin:0 0 4px;font-size:18px}
+      p{color:#999;margin:0 0 16px}
+      a{color:#4a9eff}
+      input{width:100%;box-sizing:border-box;padding:8px 10px;background:#171a22;border:1px solid #242836;border-radius:8px;color:#f0f0f0;font:13px ui-monospace,monospace}
+      .row{margin-top:12px;display:flex;align-items:center;gap:10px}
+      button{padding:7px 14px;border:1px solid #242836;border-radius:8px;background:#171a22;color:#f0f0f0;cursor:pointer}
+      button:hover{border-color:#4a9eff40}
+      #status{color:#999}
+    </style>
+  </head>
+  <body>
+    <h2>DevTrace</h2>
+    <p>Optional API token for deeper scoring. Get one at
+      <a href="https://devtrace.thingz.io/settings" target="_blank" rel="noopener">devtrace.thingz.io/settings</a>.
+      Stored locally in your browser; sent only to DevTrace when scoring.</p>
+    <input id="token" type="password" placeholder="dt_..." autocomplete="off" />
+    <div class="row">
+      <button id="save">Save</button>
+      <button id="clear">Clear</button>
+      <span id="status"></span>
+    </div>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>
