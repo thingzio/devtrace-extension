@@ -4,7 +4,6 @@ export interface FetchScoreOpts {
   apiUrl: string
   token?: string
   repo?: string
-  trustedOrgs?: string
 }
 
 export class APIError extends Error {
@@ -18,12 +17,6 @@ export function buildURL(username: string, opts: FetchScoreOpts): string {
   const base = `${opts.apiUrl}/api/v1/score/${encodeURIComponent(username)}`
   const params = new URLSearchParams()
   if (opts.repo) params.set('repo', opts.repo)
-  if (opts.trustedOrgs) {
-    for (const org of opts.trustedOrgs.split(',')) {
-      const t = org.trim()
-      if (t) params.append('trusted_orgs', t)
-    }
-  }
   const qs = params.toString()
   return qs ? `${base}?${qs}` : base
 }

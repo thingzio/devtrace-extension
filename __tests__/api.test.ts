@@ -38,12 +38,21 @@ describe('fetchScore', () => {
     expect(headers.Authorization).toBe('Bearer dt_123')
   })
 
+  it('fetches the URL built by buildURL', async () => {
+    const f = jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ username: 'alice' }), { status: 200 }),
+    )
+    await fetchScore('alice', { apiUrl: 'https://x', repo: 'o/r' })
+    expect(f.mock.calls[0][0]).toBe('https://x/api/v1/score/alice?repo=o%2Fr')
+  })
+
   it('throws APIError on non-ok', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(
+    jest.spyOn(global, 'fetch').mockImplementation(async () =>
       new Response(JSON.stringify({ error: 'nope' }), { status: 401 }),
     )
     await expect(fetchScore('alice', { apiUrl: 'https://x' })).rejects.toMatchObject({
       status: 401,
     })
+    await expect(fetchScore('alice', { apiUrl: 'https://x' })).rejects.toThrow(/nope/)
   })
 })
