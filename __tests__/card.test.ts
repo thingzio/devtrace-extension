@@ -51,4 +51,29 @@ describe('renderCard', () => {
     const root = renderCard(host(), 'ghost', res).shadowRoot!
     expect(root.textContent).toContain('No DevTrace profile')
   })
+
+  it('neutralizes XSS in dynamic strings via textContent', () => {
+    const res: ScoreResult = {
+      ok: true,
+      data: { username: 'x', score: { grade: 'A', value: 0.5 }, risk_summary: '<img src=x onerror=alert(1)>' } as any,
+    }
+    const root = renderCard(host(), 'x', res).shadowRoot!
+    expect(root.querySelector('img')).toBeNull()
+    expect(root.textContent).toContain('<img src=x onerror=alert(1)>')
+  })
+
+  it('renders 429 as rate-limited message', () => {
+    const res: ScoreResult = { ok: false, status: 429, message: 'x' }
+    const root = renderCard(host(), 'a', res).shadowRoot!
+    expect(root.textContent?.toLowerCase()).toContain('rate limited')
+  })
+
+  it('renders non-finite value as em dash without throwing', () => {
+    const res: ScoreResult = {
+      ok: true,
+      data: { username: 'a', score: { grade: 'A', value: 'oops' as any } } as any,
+    }
+    const root = renderCard(host(), 'a', res).shadowRoot!
+    expect(root.textContent).toContain('—')
+  })
 })
