@@ -1,0 +1,22 @@
+{
+  "name": "devtrace-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension that shows DevTrace contributor trust scores inline on GitHub.",
+  "license": "MIT",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "jest",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.270",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.23.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "ts-jest": "^29.2.0",
+    "typescript": "^5.5.0"
+  }
+}
