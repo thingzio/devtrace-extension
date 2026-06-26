@@ -38,6 +38,8 @@ Without a token you get the basic score. For deeper scoring, create an API token
 - The extension requests only the `storage` permission and host access to `https://devtrace.thingz.io/*`.
 - Score data is fetched by the background service worker and rendered inside an isolated Shadow DOM using `textContent` (never `innerHTML` for dynamic values), so API responses cannot inject markup into GitHub pages.
 
+See [PRIVACY.md](PRIVACY.md) for the full privacy policy.
+
 ## How it works
 
 ```
