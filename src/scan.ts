@@ -12,6 +12,11 @@ export function findContributors(root: ParentNode): Contributor[] {
   const anchors = root.querySelectorAll<HTMLAnchorElement>('a.author, a[data-hovercard-type="user"]')
   for (const el of anchors) {
     if (el.dataset[BADGE_ATTR]) continue
+    // Skip avatar links (they wrap an <img>) and any anchor without visible
+    // text, so the badge attaches only to the actual textual username — not
+    // its duplicate avatar link pointing at the same profile.
+    if (el.querySelector('img, svg')) continue
+    if (!el.textContent || !el.textContent.trim()) continue
     const username = usernameFromHref(el.getAttribute('href'))
     if (!username) continue
     out.push({ el, username })

@@ -8,15 +8,20 @@ const WARN = '#eab308'
 const DANGER = '#ef4444'
 const MUTED = '#999999'
 
+// The card is an absolutely-positioned overlay anchored to the badge, so it
+// floats over the page instead of taking layout space and shoving siblings.
 const CSS =
   ':host{all:initial}' +
-  '.dt-card{font:13px/1.5 ui-sans-serif,system-ui,sans-serif;border:1px solid #242836;border-radius:12px;padding:12px 14px;background:#0a0a0c;color:#f0f0f0;max-width:280px;box-shadow:0 0 24px #4a9eff25,0 4px 16px rgba(0,0,0,.4)}' +
-  '.dt-head{display:flex;align-items:center;gap:8px}' +
+  '.dt-card{position:absolute;top:100%;left:0;margin-top:6px;z-index:2147483647;' +
+  'font:13px/1.45 ui-sans-serif,system-ui,sans-serif;border:1px solid #242836;border-radius:10px;' +
+  'padding:10px 14px;background:#0a0a0c;color:#f0f0f0;width:380px;max-width:80vw;' +
+  'box-shadow:0 0 24px #4a9eff25,0 4px 16px rgba(0,0,0,.4)}' +
+  '.dt-head{display:flex;align-items:baseline;gap:10px}' +
   '.dt-grade{font-weight:600;font-size:18px}' +
   '.dt-val{color:#999;font-variant-numeric:tabular-nums}' +
   '.dt-link{color:#4a9eff;text-decoration:none;font-weight:500}' +
-  '.dt-risk{margin:8px 0;color:#999}' +
-  '.dt-foot{margin-top:8px}' +
+  '.dt-risk{margin:5px 0 0;color:#999}' +
+  '.dt-foot{margin-top:6px}' +
   '.dt-err{color:#ef4444}'
 
 export function gradeColor(grade: string): string {
@@ -68,7 +73,7 @@ export function renderCard(host: HTMLElement, username: string, res: ScoreResult
   const head = el('div', 'dt-head')
   const grade = el('span', 'dt-grade', d.score.grade)
   grade.style.color = gradeColor(d.score.grade)
-  head.append(grade, el('span', 'dt-val', valueText))
+  head.append(grade, el('span', 'dt-val', `Score ${valueText}`))
   card.append(head)
 
   if (d.risk_summary) card.append(el('div', 'dt-risk', d.risk_summary))
