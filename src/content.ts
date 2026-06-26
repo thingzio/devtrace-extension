@@ -22,8 +22,12 @@ async function openCard(anchor: HTMLElement, username: string): Promise<void> {
   anchor.insertAdjacentElement('afterend', host)
   openHost = host
   const req: ScoreRequest = { type: 'SCORE', username, repo: currentRepo() }
-  const res: ScoreResult = await chrome.runtime.sendMessage(req)
-  renderCard(host, username, res)
+  try {
+    const res: ScoreResult = await chrome.runtime.sendMessage(req)
+    renderCard(host, username, res)
+  } catch {
+    renderCard(host, username, { ok: false, status: 0, message: "Couldn't reach DevTrace." })
+  }
 }
 
 function makeBadge(c: Contributor): void {
@@ -47,7 +51,15 @@ function scan(): void {
 }
 
 scan()
-const obs = new MutationObserver(() => scan())
+let queued = false
+const obs = new MutationObserver(() => {
+  if (queued) return
+  queued = true
+  requestAnimationFrame(() => {
+    queued = false
+    scan()
+  })
+})
 obs.observe(document.body, { childList: true, subtree: true })
 document.addEventListener('click', (e) => {
   if (openHost && !openHost.contains(e.target as Node)) {
