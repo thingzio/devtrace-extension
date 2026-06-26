@@ -12,6 +12,41 @@
 
 ---
 
+## Branding (aligned to thingz.io)
+
+The card, badge, and icons must match the thingz.io design language (dark theme).
+Source: `https://thingz.io/colors_and_type.css` and the DevTrace product mark
+`https://thingz.io/img/devtrace.svg`.
+
+**Palette (CSS custom properties to use verbatim in `card.ts`):**
+
+```
+--dt-bg:        #0a0a0c   /* card surface */
+--dt-bg-elev:   #171a22   /* elevated rows */
+--dt-border:    #242836
+--dt-accent:    #4a9eff   /* links, focus, brand */
+--dt-glow:      #4a9eff25
+--dt-text:      #f0f0f0
+--dt-text-muted:#999999
+--dt-text-dim:  #555555
+--dt-ok:        #22c55e   /* grades A* */
+--dt-warn:      #eab308   /* grades B/C */
+--dt-danger:    #ef4444   /* grades D/F */
+--dt-radius:    12px
+```
+
+**DevTrace mark** (line-art gauge; reuse as badge glyph and icon base):
+
+```svg
+<svg viewBox="-4 0 32 32" fill="none" stroke="#4a9eff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M2 20A10 10 0 0 1 22 20"/><line x1="12" y1="20" x2="7" y2="9"/><circle cx="12" cy="20" r="2"/></svg>
+```
+
+(Original mark strokes in `#f0f0f0`; recolor stroke to `--dt-accent` `#4a9eff`
+for the badge/icon foreground.) Save the original as `public/icons/devtrace.svg`.
+
+Grade→color helper (used by card and badge): grade starting with `A` → `--dt-ok`;
+`B`/`C` → `--dt-warn`; `D`/`F` → `--dt-danger`; else `--dt-text-muted`.
+
 ## Conventions
 
 - TDD throughout: failing test → run (fail) → minimal impl → run (pass) → commit.
@@ -434,7 +469,7 @@ git commit -S -m "feat: add background worker with TTL cache and message routing
 **Step 1: Write failing tests**
 
 ```ts
-import { renderCard } from '../src/card'
+import { renderCard, gradeColor } from '../src/card'
 import type { ScoreResult } from '../src/types'
 
 function host(): HTMLElement {
@@ -442,6 +477,17 @@ function host(): HTMLElement {
   document.body.appendChild(el)
   return el
 }
+
+describe('gradeColor', () => {
+  it('maps grade families to brand status colors', () => {
+    expect(gradeColor('A+')).toBe('#22c55e')
+    expect(gradeColor('B-')).toBe('#eab308')
+    expect(gradeColor('C')).toBe('#eab308')
+    expect(gradeColor('D')).toBe('#ef4444')
+    expect(gradeColor('F')).toBe('#ef4444')
+    expect(gradeColor('?')).toBe('#999999')
+  })
+})
 
 describe('renderCard', () => {
   it('shows grade, value and full-review link on success', () => {
@@ -499,33 +545,59 @@ import type { ScoreResult } from './types'
 
 const SITE = 'https://devtrace.thingz.io'
 
+// thingz.io brand status colors
+const OK = '#22c55e'
+const WARN = '#eab308'
+const DANGER = '#ef4444'
+const MUTED = '#999999'
+
+export function gradeColor(grade: string): string {
+  const g = grade.trim().charAt(0).toUpperCase()
+  if (g === 'A') return OK
+  if (g === 'B' || g === 'C') return WARN
+  if (g === 'D' || g === 'F') return DANGER
+  return MUTED
+}
+
 function errorMessage(status: number, message: string): string {
   if (status === 401 || status === 403) return 'Invalid or missing token — open the extension options to add one.'
-  if (status === 404) return 'No DevTrace profile for @' + 'this user.'
   if (status === 429) return 'Rate limited, try again shortly.'
   return message || "Couldn't reach DevTrace."
 }
 
+// Dark card matching thingz.io; rendered in an isolated shadow root so it looks
+// the same over GitHub's light or dark theme.
+const STYLE =
+  '<style>:host{all:initial}' +
+  '.dt-card{font:13px/1.5 ui-sans-serif,system-ui,sans-serif;border:1px solid #242836;border-radius:12px;padding:12px 14px;background:#0a0a0c;color:#f0f0f0;max-width:280px;box-shadow:0 0 24px #4a9eff25,0 4px 16px rgba(0,0,0,.4)}' +
+  '.dt-head{display:flex;align-items:center;gap:8px}' +
+  '.dt-grade{font-weight:600;font-size:18px}' +
+  '.dt-val{color:#999;font-variant-numeric:tabular-nums}' +
+  '.dt-link{color:#4a9eff;text-decoration:none;font-weight:500}' +
+  '.dt-risk{margin:8px 0;color:#999}' +
+  '.dt-foot{margin-top:8px}' +
+  '.dt-err{color:#ef4444}</style>'
+
 export function renderCard(host: HTMLElement, username: string, res: ScoreResult): HTMLElement {
   const root = host.shadowRoot ?? host.attachShadow({ mode: 'open' })
-  const style = '<style>:host{all:initial}.dt-card{font:13px system-ui;border:1px solid #d0d7de;border-radius:8px;padding:10px 12px;background:#fff;color:#1f2328;max-width:280px;box-shadow:0 1px 3px rgba(0,0,0,.12)}.dt-grade{font-weight:700;font-size:16px}.dt-link{color:#0969da;text-decoration:none}.dt-risk{margin:6px 0;color:#57606a}.dt-err{color:#cf222e}</style>'
 
   if (!res.ok) {
-    // 404 wording needs the username
     const msg = res.status === 404 ? `No DevTrace profile for @${username}.` : errorMessage(res.status, res.message)
-    root.innerHTML = `${style}<div class="dt-card"><div class="dt-err">${msg}</div></div>`
+    root.innerHTML = `${STYLE}<div class="dt-card"><div class="dt-err">${msg}</div></div>`
     return host
   }
 
   const d = res.data
   const reviewURL = `${SITE}/score/${encodeURIComponent(username)}`
+  const color = gradeColor(d.score.grade)
   const risk = d.risk_summary ? `<div class="dt-risk">${d.risk_summary}</div>` : ''
   const detail = d.detail ? `<div class="dt-risk">${d.detail}</div>` : ''
   root.innerHTML =
-    `${style}<div class="dt-card">` +
-    `<div><span class="dt-grade">${d.score.grade}</span> · ${d.score.value.toFixed(2)}</div>` +
+    `${STYLE}<div class="dt-card">` +
+    `<div class="dt-head"><span class="dt-grade" style="color:${color}">${d.score.grade}</span>` +
+    `<span class="dt-val">${d.score.value.toFixed(2)}</span></div>` +
     risk + detail +
-    `<div><a class="dt-link" href="${reviewURL}" target="_blank" rel="noopener">Full review →</a></div>` +
+    `<div class="dt-foot"><a class="dt-link" href="${reviewURL}" target="_blank" rel="noopener">Full review →</a></div>` +
     `</div>`
   return host
 }
@@ -641,14 +713,18 @@ function currentRepo(): string | undefined {
   return seg.length >= 2 ? `${seg[0]}/${seg[1]}` : undefined
 }
 
+// DevTrace gauge mark, accent-colored, used as the badge glyph.
+const GAUGE_SVG =
+  '<svg width="12" height="12" viewBox="-4 0 32 32" fill="none" stroke="#4a9eff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20A10 10 0 0 1 22 20"/><line x1="12" y1="20" x2="7" y2="9"/><circle cx="12" cy="20" r="2"/></svg>'
+
 function makeBadge(c: Contributor): void {
   c.el.dataset[BADGE_ATTR] = '1'
   const badge = document.createElement('button')
   badge.className = BADGE_CLASS
-  badge.textContent = 'DT'
+  badge.innerHTML = GAUGE_SVG
   badge.title = `DevTrace score for @${c.username}`
   badge.style.cssText =
-    'margin-left:4px;font:10px/1 system-ui;padding:1px 4px;border:1px solid #d0d7de;border-radius:6px;background:#f6f8fa;cursor:pointer;vertical-align:middle'
+    'display:inline-flex;align-items:center;margin-left:4px;padding:2px;border:1px solid #242836;border-radius:6px;background:#0a0a0c;cursor:pointer;vertical-align:middle;line-height:0'
   badge.addEventListener('click', (e) => {
     e.preventDefault()
     e.stopPropagation()
@@ -823,10 +899,28 @@ git commit -S -m "feat: add options page for API token management"
 }
 ```
 
-**Step 2: Add icons**
+**Step 2: Add icons (thingz.io-aligned)**
 
-Reuse the action's shield/blue motif (decision: open question #2). Place three PNGs
-in `public/icons/`. Placeholder solid-blue squares acceptable until final artwork.
+Save the DevTrace gauge mark as `public/icons/devtrace.svg` (the SVG in the
+Branding section). Generate `icon16.png`, `icon48.png`, `icon128.png` from a
+composed source: accent gauge (`#4a9eff` stroke) centered on a `#0a0a0c` rounded
+square (radius ≈ 22% of size), matching thingz.io's dark card surface.
+
+Generate the PNGs deterministically with a small Node script using `sharp`
+(add `sharp` to devDependencies) so the build is reproducible — do NOT hand-draw:
+
+```js
+// scripts/gen-icons.mjs
+import sharp from 'sharp'
+const gauge = '<path d="M2 20A10 10 0 0 1 22 20" stroke="#4a9eff" stroke-width="3.5" stroke-linecap="round" fill="none"/><line x1="12" y1="20" x2="7" y2="9" stroke="#4a9eff" stroke-width="3.5" stroke-linecap="round"/><circle cx="12" cy="20" r="2" stroke="#4a9eff" stroke-width="3.5" fill="none"/>'
+for (const size of [16, 48, 128]) {
+  const r = Math.round(size * 0.22)
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 32 32"><rect width="32" height="32" rx="${(r/size)*32}" fill="#0a0a0c"/><g transform="translate(2 1)">${gauge}</g></svg>`
+  await sharp(Buffer.from(svg)).png().toFile(`public/icons/icon${size}.png`)
+}
+```
+
+Add an npm script `"icons": "node scripts/gen-icons.mjs"` and run it.
 
 **Step 3: Build and load unpacked**
 
@@ -957,5 +1051,6 @@ Not a code task — checklist in README:
 
 1. **Badge placement scope** — v1 targets `a.author` + `a[data-hovercard-type=user]`
    (covers mentions, commit authors, profile links). Expand later if needed.
-2. **Branding** — placeholder blue icons until final shield artwork is supplied.
+2. **Branding** — RESOLVED: aligned to thingz.io (dark theme, `#4a9eff` accent,
+   DevTrace gauge mark). See Branding section.
 3. **Firefox/Edge port** — out of scope for v1.
