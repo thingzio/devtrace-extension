@@ -21,7 +21,12 @@ const CSS =
   '.dt-val{color:#999;font-variant-numeric:tabular-nums}' +
   '.dt-link{color:#4a9eff;text-decoration:none;font-weight:500}' +
   '.dt-risk{margin:5px 0 0;color:#999}' +
-  '.dt-foot{margin-top:6px}' +
+  '.dt-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px 18px;margin-top:8px}' +
+  '.dt-stat{display:flex;justify-content:space-between;gap:8px}' +
+  '.dt-stat-l{color:#999}' +
+  '.dt-stat-v{color:#f0f0f0;font-variant-numeric:tabular-nums}' +
+  '.dt-flag{margin-top:6px;color:#ef4444;font-weight:600}' +
+  '.dt-foot{margin-top:8px}' +
   '.dt-err{color:#ef4444}'
 
 export function gradeColor(grade: string): string {
@@ -36,6 +41,12 @@ function errorMessage(status: number, message: string): string {
   if (status === 401 || status === 403) return 'Invalid or missing token — open the extension options to add one.'
   if (status === 429) return 'Rate limited, try again shortly.'
   return message || "Couldn't reach DevTrace."
+}
+
+function fmtAge(days: number): string {
+  if (!Number.isFinite(days)) return '—'
+  if (days >= 365) return `${(days / 365).toFixed(1)}y`
+  return `${Math.round(days)}d`
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -77,6 +88,26 @@ export function renderCard(host: HTMLElement, username: string, res: ScoreResult
   card.append(head)
 
   if (d.risk_summary) card.append(el('div', 'dt-risk', d.risk_summary))
+
+  // Authenticated responses carry richer signals; show the trust essentials.
+  const s = d.signals
+  if (s) {
+    const grid = el('div', 'dt-grid')
+    const stat = (label: string, val: string): HTMLElement => {
+      const cell = el('div', 'dt-stat')
+      cell.append(el('span', 'dt-stat-l', label), el('span', 'dt-stat-v', val))
+      return cell
+    }
+    grid.append(stat('Account age', fmtAge(s.account_age_days)))
+    grid.append(stat('Followers', String(s.followers)))
+    grid.append(stat('Public repos', String(s.public_repos)))
+    grid.append(stat('PRs merged', String(s.prs_merged)))
+    if (d.repo_context) {
+      grid.append(stat('Verified commits', d.repo_context.commits_verified ? 'Yes' : 'No'))
+    }
+    card.append(grid)
+    if (s.suspended) card.append(el('div', 'dt-flag', '⚠ Account suspended'))
+  }
 
   // The card only shows a summary; link to the user's full breakdown page.
   const foot = el('div', 'dt-foot')
