@@ -78,21 +78,10 @@ export function renderCard(host: HTMLElement, username: string, res: ScoreResult
 
   if (d.risk_summary) card.append(el('div', 'dt-risk', d.risk_summary))
 
-  // Basic (unauthenticated) responses carry a `detail` upsell; replace its
-  // verbatim sign-up copy with a clean pointer to the site.
-  if (d.detail) {
-    const note = el('div', 'dt-risk')
-    note.append('See full signal breakdown at ')
-    const siteLink = el('a', 'dt-link', 'devtrace.thingz.io')
-    siteLink.href = SITE
-    siteLink.target = '_blank'
-    siteLink.rel = 'noopener'
-    note.append(siteLink)
-    card.append(note)
-  }
-
+  // The card only shows a summary; link to the user's full breakdown page.
   const foot = el('div', 'dt-foot')
-  const link = el('a', 'dt-link', 'Full review →')
+  foot.append('See full signal breakdown at ')
+  const link = el('a', 'dt-link', 'devtrace.thingz.io')
   link.href = `${SITE}/score/${encodeURIComponent(username)}`
   link.target = '_blank'
   link.rel = 'noopener'

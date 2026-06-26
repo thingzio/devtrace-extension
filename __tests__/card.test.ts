@@ -40,16 +40,17 @@ describe('renderCard', () => {
     expect(root.textContent).toContain('Low risk')
   })
 
-  it('shows a linked site pointer for basic (detail) responses, not the raw upsell', () => {
+  it('links the breakdown to the user score page and shows no "Full review" CTA', () => {
     const res: ScoreResult = {
       ok: true,
-      data: { username: 'a', score: { grade: 'C-', value: 0.54 }, detail: 'Sign up for full signal breakdown -> devtrace.thingz.io' } as any,
+      data: { username: 'alice', score: { grade: 'C-', value: 0.54 }, detail: 'Sign up for full signal breakdown -> devtrace.thingz.io' } as any,
     }
-    const root = renderCard(host(), 'a', res).shadowRoot!
+    const root = renderCard(host(), 'alice', res).shadowRoot!
     expect(root.textContent).toContain('See full signal breakdown at')
     expect(root.textContent).not.toContain('Sign up')
+    expect(root.textContent).not.toContain('Full review')
     const siteLink = Array.from(root.querySelectorAll('a')).find((a) => a.textContent === 'devtrace.thingz.io')
-    expect(siteLink?.getAttribute('href')).toBe('https://devtrace.thingz.io')
+    expect(siteLink?.getAttribute('href')).toBe('https://devtrace.thingz.io/score/alice')
   })
 
   it('renders an error message on failure', () => {
