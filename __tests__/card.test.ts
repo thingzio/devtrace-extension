@@ -40,6 +40,18 @@ describe('renderCard', () => {
     expect(root.textContent).toContain('Low risk')
   })
 
+  it('shows a linked site pointer for basic (detail) responses, not the raw upsell', () => {
+    const res: ScoreResult = {
+      ok: true,
+      data: { username: 'a', score: { grade: 'C-', value: 0.54 }, detail: 'Sign up for full signal breakdown -> devtrace.thingz.io' } as any,
+    }
+    const root = renderCard(host(), 'a', res).shadowRoot!
+    expect(root.textContent).toContain('See full signal breakdown at')
+    expect(root.textContent).not.toContain('Sign up')
+    const siteLink = Array.from(root.querySelectorAll('a')).find((a) => a.textContent === 'devtrace.thingz.io')
+    expect(siteLink?.getAttribute('href')).toBe('https://devtrace.thingz.io')
+  })
+
   it('renders an error message on failure', () => {
     const res: ScoreResult = { ok: false, status: 401, message: 'bad token' }
     const root = renderCard(host(), 'a', res).shadowRoot!
