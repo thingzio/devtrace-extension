@@ -1,4 +1,4 @@
-import { renderCard, gradeColor } from '../src/card'
+import { renderCard, renderLoading, gradeColor } from '../src/card'
 import type { ScoreResult } from '../src/types'
 
 function host(): HTMLElement {
@@ -6,6 +6,15 @@ function host(): HTMLElement {
   document.body.appendChild(el)
   return el
 }
+
+describe('renderLoading', () => {
+  it('shows a spinner and loading text with the username', () => {
+    const root = renderLoading(host(), 'alice').shadowRoot!
+    expect(root.querySelector('.dt-spin')).not.toBeNull()
+    expect(root.textContent).toContain('Loading')
+    expect(root.textContent).toContain('@alice')
+  })
+})
 
 describe('gradeColor', () => {
   it('maps grade families to brand status colors', () => {

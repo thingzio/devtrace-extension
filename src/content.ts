@@ -1,5 +1,5 @@
 import { findContributors, BADGE_ATTR, type Contributor } from './scan'
-import { renderCard } from './card'
+import { renderCard, renderLoading } from './card'
 import type { ScoreRequest, ScoreResult } from './types'
 
 const BADGE_CLASS = 'dt-badge'
@@ -21,6 +21,7 @@ async function openCard(anchor: HTMLElement, username: string): Promise<void> {
   host.style.cssText = 'position:relative;display:inline-block;margin-left:6px;z-index:2147483647'
   anchor.insertAdjacentElement('afterend', host)
   openHost = host
+  renderLoading(host, username)
   const req: ScoreRequest = { type: 'SCORE', username, repo: currentRepo() }
   try {
     const res: ScoreResult = await chrome.runtime.sendMessage(req)

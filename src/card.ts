@@ -30,7 +30,11 @@ const CSS =
   '.dt-cat-na{color:#555;font-size:11px;text-align:right}' +
   '.dt-flag{margin-top:8px;color:#ef4444;font-weight:600}' +
   '.dt-foot{margin-top:10px}' +
-  '.dt-err{color:#ef4444}'
+  '.dt-err{color:#ef4444}' +
+  '.dt-loading{display:flex;align-items:center;gap:8px;color:#999}' +
+  '.dt-spin{width:14px;height:14px;border:2px solid #242836;border-top-color:#4a9eff;' +
+  'border-radius:50%;animation:dt-spin .7s linear infinite;flex-shrink:0}' +
+  '@keyframes dt-spin{to{transform:rotate(360deg)}}'
 
 export function gradeColor(grade: string): string {
   const g = grade.trim().charAt(0).toUpperCase()
@@ -59,6 +63,23 @@ function el<K extends keyof HTMLElementTagNameMap>(
   if (className) node.className = className
   if (text !== undefined) node.textContent = text
   return node
+}
+
+// Shown immediately on badge click, before the score request resolves, so the
+// card has no dead gap between click and content.
+export function renderLoading(host: HTMLElement, username: string): HTMLElement {
+  const root = host.shadowRoot ?? host.attachShadow({ mode: 'open' })
+  root.replaceChildren()
+
+  const style = document.createElement('style')
+  style.textContent = CSS
+  const card = el('div', 'dt-card')
+  const row = el('div', 'dt-loading')
+  row.append(el('span', 'dt-spin'), document.createTextNode(`Loading DevTrace score for @${username}…`))
+  card.append(row)
+  root.append(style, card)
+
+  return host
 }
 
 // Renders into an isolated shadow root; all dynamic values use textContent so
