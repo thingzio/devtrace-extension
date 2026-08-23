@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "description": "Chrome extension that shows DevTrace contributor trust scores inline on GitHub.",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "build": "node build.mjs",
     "icons": "node scripts/gen-icons.mjs",
