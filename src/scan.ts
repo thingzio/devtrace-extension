@@ -26,7 +26,7 @@ export function findContributors(root: ParentNode): Contributor[] {
 
 export function usernameFromHref(href: string | null): string | null {
   if (!href) return null
-  const path = href.replace(/^https?:\/\/github\.com/, '').split('?')[0].split('#')[0]
+  const path = href.replace(/^https?:\/\/github\.com\//, '/').split('?')[0].split('#')[0]
   const seg = path.split('/').filter(Boolean)
   if (seg.length !== 1) return null // only bare /user profile links
   const name = seg[0]
