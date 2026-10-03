@@ -1,4 +1,4 @@
-import { findContributors, BADGE_ATTR } from '../src/scan'
+import { findContributors, usernameFromHref, BADGE_ATTR } from '../src/scan'
 
 it('finds author links and dedups badged ones', () => {
   document.body.innerHTML = `
@@ -27,4 +27,17 @@ it('skips avatar links (anchors wrapping an image) and badges only the text name
   expect(found.length).toBe(1)
   expect(found[0].el.querySelector('img')).toBeNull()
   expect(found[0].username).toBe('erin')
+})
+
+it('extracts username from absolute github.com profile URLs', () => {
+  expect(usernameFromHref('https://github.com/frank')).toBe('frank')
+  expect(usernameFromHref('http://github.com/frank#top')).toBe('frank')
+})
+
+it('rejects hosts that merely start with github.com', () => {
+  expect(usernameFromHref('https://github.com')).toBeNull()
+  expect(usernameFromHref('https://github.comx')).toBeNull()
+  expect(usernameFromHref('https://github.com-evil')).toBeNull()
+  expect(usernameFromHref('https://github.company/frank')).toBeNull()
+  expect(usernameFromHref('https://github.com.evil.io/frank')).toBeNull()
 })
