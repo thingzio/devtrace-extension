@@ -35,7 +35,9 @@ it('extracts username from absolute github.com profile URLs', () => {
 })
 
 it('rejects hosts that merely start with github.com', () => {
+  expect(usernameFromHref('https://github.com')).toBeNull()
   expect(usernameFromHref('https://github.comx')).toBeNull()
+  expect(usernameFromHref('https://github.com-evil')).toBeNull()
   expect(usernameFromHref('https://github.company/frank')).toBeNull()
   expect(usernameFromHref('https://github.com.evil.io/frank')).toBeNull()
 })
